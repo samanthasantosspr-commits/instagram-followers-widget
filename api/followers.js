@@ -1,7 +1,14 @@
-// api/followers.js
-import fetch from "node-fetch";
-
 export default async function handler(req, res) {
+  // Habilita CORS para qualquer origem
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    // Responde rápido para pré-flight
+    return res.status(200).end();
+  }
+
   const user = req.query.user || "redeassociadas";
 
   try {
@@ -10,12 +17,9 @@ export default async function handler(req, res) {
       headers: { "User-Agent": "Mozilla/5.0 follower-widget" }
     });
     const text = await r.text();
-
-    // Tenta encontrar "edge_followed_by":{"count":XXXXX}
-    const match = text.match(/"edge_followed_by"\s*:\s*\{"count":\s*([0-9]+)/);
+    const match = text.match(/"edge_followed_by"\s*:\s*\{"count":(\d+)\}/);
 
     if (match && match[1]) {
-      res.setHeader("Access-Control-Allow-Origin", "*");
       return res.status(200).json({
         username: user,
         followers: Number(match[1])
